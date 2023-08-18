@@ -8,16 +8,16 @@ grid_data_dir = '{}/.stellarSpecModel/grid_data/'.format(home_dir)
 
 grid_names = {
     # grid_name: (file_name, url, md5)
-    'MARCS': ('MARCS_grid.hdf5', 'https://www.jianguoyun.com/p/DZmcNoUQ2ZfcCBjW-5cFIAA', 'ee32ad18eb0ab427bcebeffb0b4916ce'),
-    'BTCond': 'BTCond_grid.hdf5', 'https://www.jianguoyun.com/p/Def5fgsQ2ZfcCBiYmpgFIAA', 'ee32ad18eb0ab427bcebeffb0b4916ce'),
+    'MARCS': ('MARCS_grid.hdf5', 'https://www.jianguoyun.com/p/DZmcNoUQ2ZfcCBjW-5cFIAA', 'abc2cb39116a0202e473d6ba97373176'),
+    'BTCond': ('BTCond_grid.hdf5', 'https://www.jianguoyun.com/p/Def5fgsQ2ZfcCBiYmpgFIAA', '6f8d2c136f9aa1188b4649c6a4f1d2e1'),
 }
 
 
 def fetch_grid(grid_name):
-    if grid_name not in config.grid_names:
-        raise ValueError(f'grid_name should be one of {list(config.grid_names.keys())}')
-    file_name, url, md5_value = config.grid_names[grid_name]
-    download_dir = config.grid_data_dir
+    if grid_name not in grid_names:
+        raise ValueError(f'grid_name should be one of {list(grid_names.keys())}')
+    file_name, url, md5_value = grid_names[grid_name]
+    download_dir = grid_data_dir
     expected_file_name = file_name
     if not os.path.exists(download_dir):
         os.makedirs(download_dir)
@@ -37,6 +37,7 @@ def check_md5(file_path, md5_value):
 
 
 def download_from_jianguoyun(url, download_dir, expected_file_name):
+    print('Downloading {} from {} to {}'.format(expected_file_name, url, download_dir))
     try:
         import selenium
         from selenium import webdriver
@@ -76,6 +77,7 @@ def download_from_jianguoyun(url, download_dir, expected_file_name):
 
     driver.get(url)
 
+    print('begin to download {} from {}'.format(expected_file_name, url))
     # 点击下载链接
     try:
         driver.find_element('partial link text', 'Download').click()
@@ -94,9 +96,9 @@ def download_from_jianguoyun(url, download_dir, expected_file_name):
 
         # 如果文件已经下载，则退出循环
         if file_downloaded:
+            print()
             print(f"File {expected_file_name} downloaded successfully.")
             break
-
     # 关闭浏览器实例
     driver.quit()
 
