@@ -83,4 +83,4 @@ min and max Teff of BTCond grid = 3500.0 8000.0
 min and max FeH of BTCond grid = -4.0 0.5
 min and max logg of BTCond grid = 1.0 5.0
 ```
-![example](https://github.com/zzxihep/stellarSpecModel/blob/master/example.png)
+![example](https://github.com/zzxihep/stellarSpecModel/blob/main/example.png)
