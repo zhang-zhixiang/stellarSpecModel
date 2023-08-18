@@ -1,9 +1,9 @@
 # stellarSpecModel
----
+
 This is a simple package to interpolate the stellar spectral grid. Users provide a group of stellar parameters (Teff, FeH, logg), the package will return the corresponding stellar spectrum.
 
 ## Installation
----
+
 You can install the package by using pip:
 ```bash
 pip install git+https://github.com/zzxihep/stellarSpecModel.git
@@ -20,7 +20,7 @@ python setup.py install --user
 ```
 
 ## Dependencies
----
+
 The package depends on the following packages:
 - numpy
 - scipy
@@ -34,7 +34,7 @@ The package need to download the stellar spectral grid from website, so you need
 see more details in config.py
 
 ## Usage
----
+
 The package currently provides two classes: `MARCS_Model` and `BTCond_Model` for the MARCS and BT-Cond grid respectively. The usage of the two classes are the same. MARCS grid has a wavelength coverage of 3800-9700 Angstrom with high sampling, while BT-Cond grid has a wavelength coverage of 300-3E5 Angstrom with low sampling. You can also use your own grid by inheriting the `StellarSpecModel` class.
 
 Here we show an example of using the package:
@@ -83,4 +83,4 @@ min and max Teff of BTCond grid = 3500.0 8000.0
 min and max FeH of BTCond grid = -4.0 0.5
 min and max logg of BTCond grid = 1.0 5.0
 ```
-![example](https://github.com/zzxihep/stellarSpecModel/master/example.png)
+![example](https://github.com/zzxihep/stellarSpecModel/blob/master/example.png)
