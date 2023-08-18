@@ -17,7 +17,7 @@ def main():
     print('min and max FeH of BTCond grid =', btcond_model.min_feh, btcond_model.max_feh)
     print('min and max logg of BTCond grid =', btcond_model.min_logg, btcond_model.max_logg)
 
-    teff = 5000
+    teff = 5700
     feh = 0
     logg = 4.5
     marcs_flux = marcs_model.get_flux(teff, feh, logg)
@@ -27,6 +27,9 @@ def main():
     plt.legend()
     plt.xlabel('Wavelength ({})'.format(marcs_model.wavelength_units))
     plt.ylabel('Flux ({})'.format(marcs_model.flux_units))
+    plt.xlim(2750, 10000)
+    plt.ylim(0, 1.1 * max(marcs_flux))
+    plt.savefig('example.png', dpi=300, bbox_inches='tight')
     plt.show()
 
 
