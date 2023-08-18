@@ -84,3 +84,7 @@ min and max FeH of BTCond grid = -4.0 0.5
 min and max logg of BTCond grid = 1.0 5.0
 ```
 ![example](https://github.com/zzxihep/stellarSpecModel/blob/main/example.png)
+
+## Note
+
+The flux of the grid spectrum corresponds to the flux received by an observer located at the surface of a star. Therefore, assuming that the radius of a star is equal to $1 R_\odot$, and the observer's position is at a distance of 100 parsecs, the received flux will be `nflux = flux * (cs.R_sun / (100*u.pc)).to('').value**2`.
