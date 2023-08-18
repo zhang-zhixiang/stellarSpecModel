@@ -1,5 +1,30 @@
 import os
 import time
+from hashlib import md5
+from . import config
+
+
+def fetch_grid(grid_name):
+    if grid_name not in config.grid_names:
+        raise ValueError(f'grid_name should be one of {list(config.grid_names.keys())}')
+    file_name, url, md5_value = config.grid_names[grid_name]
+    download_dir = config.grid_data_dir
+    expected_file_name = file_name
+    if not os.path.exists(download_dir):
+        os.makedirs(download_dir)
+    if not os.path.exists(os.path.join(download_dir, expected_file_name)):
+        download_from_jianguoyun(url, download_dir, expected_file_name)
+    if not check_md5(os.path.join(download_dir, expected_file_name), md5_value):
+        raise ValueError(f'{expected_file_name} is broken, please delete it and try again')
+    return os.path.join(download_dir, expected_file_name)
+
+
+def check_md5(file_path, md5_value):
+    with open(file_path, 'rb') as f:
+        md5_obj = md5()
+        md5_obj.update(f.read())
+        md5_file = md5_obj.hexdigest()
+    return md5_file == md5_value
 
 
 def download_from_jianguoyun(url, download_dir, expected_file_name):
