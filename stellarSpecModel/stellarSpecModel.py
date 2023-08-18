@@ -1,4 +1,5 @@
 from . import config
+import os
 import scipy.interpolate as spinterp
 from astropy import units as u
 import h5py
@@ -6,21 +7,23 @@ import h5py
 
 class StellarSpecModel:
     """
-    Class to hold the stellar spectral model
+    Represents a general stellar spectral model.
+
+    This class provides functionality to handle and interpolate stellar spectral data.
+
+    Attributes:
+        None
     """
 
     def __init__(self, grid_name):
         """
-        Constructor for StellarSpecModel
+        Initialize the StellarSpecModel.
 
-        Parameters
-        ----------
-        kwargs : dict
-            Dictionary of keyword arguments
+        Args:
+            grid_name (str): Name of the spectral grid.
 
-        Returns
-        -------
-        StellarSpecModel object
+        Returns:
+            StellarSpecModel: An instance of the StellarSpecModel class.
         """
         self._grid_name = grid_name
         grids = h5py.File(self._grid_name, 'r')
@@ -42,202 +45,137 @@ class StellarSpecModel:
 
     @property
     def wavelength(self):
-        """
-        Wavelength array
-
-        Returns
-        -------
-        numpy.ndarray
-        """
+        """Get the wavelength array."""
         return self._wavelength
 
     @property
     def teff_grid(self):
-        """
-        Teff grid
-
-        Returns
-        -------
-        numpy.ndarray
-        """
+        """Get the effective temperature (Teff) grid."""
         return self._teff_grid
 
     @property
-    def teff_min(self):
-        """
-        Minimum Teff
-
-        Returns
-        -------
-        float
-        """
+    def min_teff(self):
+        """Get the minimum Teff in the grid."""
         return self._teff_grid.min()
 
     @property
-    def teff_max(self):
-        """
-        Maximum Teff
-
-        Returns
-        -------
-        float
-        """
+    def max_teff(self):
+        """Get the maximum Teff in the grid."""
         return self._teff_grid.max()
 
     @property
     def feh_grid(self):
-        """
-        FeH grid
-
-        Returns
-        -------
-        numpy.ndarray
-        """
+        """Get the metallicity (FeH) grid."""
         return self._feh_grid
 
     @property
-    def feh_min(self):
-        """
-        Minimum FeH
-
-        Returns
-        -------
-        float
-        """
+    def min_feh(self):
+        """Get the minimum FeH in the grid."""
         return self._feh_grid.min()
     
     @property
-    def feh_max(self):
-        """
-        Maximum FeH
-
-        Returns
-        -------
-        float
-        """
+    def max_feh(self):
+        """Get the maximum FeH in the grid."""
         return self._feh_grid.max()
 
     @property
     def logg_grid(self):
-        """
-        logg grid
-
-        Returns
-        -------
-        numpy.ndarray
-        """
+        """Get the surface gravity (logg) grid."""
         return self._logg_grid
 
     @property
-    def logg_min(self):
-        """
-        Minimum logg
-
-        Returns
-        -------
-        float
-        """
+    def min_logg(self):
+        """Get the minimum logg in the grid."""
         return self._logg_grid.min()
 
     @property
-    def logg_max(self):
-        """
-        Maximum logg
-
-        Returns
-        -------
-        float
-        """
+    def max_logg(self):
+        """Get the maximum logg in the grid."""
         return self._logg_grid.max()
 
     def get_flux(self, teff, feh, logg):
         """
-        Get flux for given Teff, FeH, logg
+        Get the flux for a given set of Teff, FeH, and logg values.
 
-        Parameters
-        ----------
-        teff : float
-            Teff
-        feh : float
-            FeH
-        logg : float
-            logg
+        Args:
+            teff (float): Effective temperature (Teff).
+            feh (float): Metallicity (FeH).
+            logg (float): Surface gravity (logg).
 
-        Returns
-        -------
-        numpy.ndarray
+        Returns:
+            numpy.ndarray: Flux array.
         """
-        if teff < self.teff_min or teff > self.teff_max:
+        if teff < self.min_teff or teff > self.max_teff:
             raise ValueError('Teff outside of grid range')
-        if feh < self.feh_min or feh > self.feh_max:
+        if feh < self.min_feh or feh > self.max_feh:
             raise ValueError('FeH outside of grid range')
-        if logg < self.logg_min or logg > self.logg_max:
+        if logg < self.min_logg or logg > self.max_logg:
             raise ValueError('logg outside of grid range')
         log_flux = self._model((teff, feh, logg))
         return 10.0 ** log_flux
 
     @property
     def flux_units(self):
-        """
-        Flux units
-
-        Returns
-        -------
-        astropy.units
-        """
+        """Get the flux units."""
         return self._flux_units
 
     @property
     def wavelength_units(self):
-        """
-        Wavelength units
-
-        Returns
-        -------
-        astropy.units
-        """
+        """Get the wavelength units."""
         return self._wavelength_units
 
 
 class MARCS_Model(StellarSpecModel):
     """
-    Class to hold the MARCS stellar spectral model
+    Represents the MARCS stellar spectral model.
+
+    This class specializes the StellarSpecModel for MARCS model.
+
+    Attributes:
+        None
     """
 
     def __init__(self):
         """
-        Constructor for MARCS_Model
+        Initialize the MARCS_Model.
 
-        Parameters
-        ----------
-        kwargs : dict
-            Dictionary of keyword arguments
+        Args:
+            None
 
-        Returns
-        -------
-        MARCS_Model object
+        Returns:
+            MARCS_Model: An instance of the MARCS_Model class.
         """
-        grid_name = config.grid_data_dir + config.grid_names['MARCS']
-        super().__init__(grid_name)
+        grid_name = 'MARCS'
+        file_name, url, md5_value = config.grid_names[grid_name]
+        abs_filename = os.path.join(config.grid_data_dir, file_name)
+        if not os.path.exists(abs_filename):
+            config.fetch_grid(grid_name)
+        super().__init__(abs_filename)
 
 
 class BTCond_Model(StellarSpecModel):
     """
-    Class to hold the BTCond stellar spectral model
+    Represents the BTCond stellar spectral model.
+
+    This class specializes the StellarSpecModel for BTCond model.
+
+    Attributes:
+        None
     """
 
     def __init__(self):
         """
-        Constructor for BTCond_Model
+        Initialize the BTCond_Model.
 
-        Parameters
-        ----------
-        kwargs : dict
-            Dictionary of keyword arguments
+        Args:
+            None
 
-        Returns
-        -------
-        BTCond_Model object
+        Returns:
+            BTCond_Model: An instance of the BTCond_Model class.
         """
-        grid_name = config.grid_data_dir + config.grid_names['BTCond']
-        super().__init__(grid_name)
+        grid_name = 'BTCond'
+        file_name, url, md5_value = config.grid_names[grid_name]
+        abs_filename = os.path.join(config.grid_data_dir, file_name)
+        if not os.path.exists(abs_filename):
+            config.fetch_grid(grid_name)
+        super().__init__(abs_filename)
