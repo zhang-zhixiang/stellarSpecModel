@@ -8,7 +8,7 @@ grid_data_dir = '{}/.stellarSpecModel/grid_data/'.format(home_dir)
 
 grid_names = {
     # grid_name: (file_name, url, md5)
-    'MARCS': ('MARCS_grid.hdf5', 'https://www.jianguoyun.com/p/DZmcNoUQ2ZfcCBjW-5cFIAA', 'abc2cb39116a0202e473d6ba97373176'),
+    'MARCS': ('MARCS_grid.hdf5', 'https://www.jianguoyun.com/p/DZmcNoUQ2ZfcCBjW-5cFIAA', '12a8d81e58db4e2fe5f1a79f6da3d9b8'),
     'BTCond': ('BTCond_grid.hdf5', 'https://www.jianguoyun.com/p/Def5fgsQ2ZfcCBiYmpgFIAA', '6f8d2c136f9aa1188b4649c6a4f1d2e1'),
 }
 
