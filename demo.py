@@ -10,12 +10,19 @@ def main():
     print('min and max Teff of MARCS grid =', marcs_model.min_teff, marcs_model.max_teff)
     print('min and max FeH of MARCS grid =', marcs_model.min_feh, marcs_model.max_feh)
     print('min and max logg of MARCS grid =', marcs_model.min_logg, marcs_model.max_logg)
+    print('Teff grid of MARCS =', marcs_model.teff_grid)
+    print('FeH grid of MARCS =', marcs_model.feh_grid)
+    print('logg grid of MARCS =', marcs_model.logg_grid)
+    print('\n')
 
     print('BTCond wavelength unit =', btcond_model.wavelength_units)
     print('BTCond flux units =', btcond_model.flux_units)
     print('min and max Teff of BTCond grid =', btcond_model.min_teff, btcond_model.max_teff)
     print('min and max FeH of BTCond grid =', btcond_model.min_feh, btcond_model.max_feh)
     print('min and max logg of BTCond grid =', btcond_model.min_logg, btcond_model.max_logg)
+    print('Teff grid of BTCond =', btcond_model.teff_grid)
+    print('FeH grid of BTCond =', btcond_model.feh_grid)
+    print('logg grid of BTCond =', btcond_model.logg_grid)
 
     teff = 5700
     feh = 0
