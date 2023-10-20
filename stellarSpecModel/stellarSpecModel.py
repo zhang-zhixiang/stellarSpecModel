@@ -153,6 +153,34 @@ class MARCS_Model(StellarSpecModel):
         super().__init__(abs_filename)
 
 
+class MARCS_Model_hiRes(StellarSpecModel):
+    """
+    Represents the MARCS stellar spectral model.
+
+    This class specializes the StellarSpecModel for MARCS model with higher resolution.
+    The resolution of this grid is corresponding to a velocity dispersion of 4 km/s.
+
+    Attributes:
+        None
+    """
+    def __init__(self):
+        """
+        Initialize the MARCS_Model_hiRes.
+
+        Args:
+            None
+
+        Returns:
+            MARCS_Model_hiRes: An instance of the MARCS_Model_hiRes class.
+        """
+        grid_name = 'MARCS_hiRes'
+        file_name, url, md5_value = config.grid_names[grid_name]
+        abs_filename = os.path.join(config.grid_data_dir, file_name)
+        if not os.path.exists(abs_filename):
+            config.fetch_grid(grid_name)
+        super().__init__(abs_filename)
+
+
 class BTCond_Model(StellarSpecModel):
     """
     Represents the BTCond stellar spectral model.
