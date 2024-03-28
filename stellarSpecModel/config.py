@@ -11,6 +11,7 @@ grid_names = {
     'MARCS': ('MARCS_grid.hdf5', 'https://www.jianguoyun.com/p/DZmcNoUQ2ZfcCBjW-5cFIAA', 'e94e1f52807aa647bb4e9a9bce37e352'),
     'BTCond': ('BTCond_grid.hdf5', 'https://www.jianguoyun.com/p/Def5fgsQ2ZfcCBiYmpgFIAA', '6f8d2c136f9aa1188b4649c6a4f1d2e1'),
     'MARCS_hiRes': ('MARCS_grid_hiRes.hdf5', 'https://www.jianguoyun.com/p/DZmcNoUQ2ZfcCBjW-5cFIAA', '230a463e501f72c0d306432e3963f46e'),
+    'BTCond_hiRes': ('BTCond_grid_hiRes.hdf5', 'https://www.jianguoyun.com/p/Def5fgsQ2ZfcCBiYmpgFIAA', 'b1105811bf7175df0bebb60785050850'),
 }
 
 
