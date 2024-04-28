@@ -235,3 +235,115 @@ class BTCond_Model_hiRes(StellarSpecModel):
         if not os.path.exists(abs_filename):
             config.fetch_grid(grid_name)
         super().__init__(abs_filename)
+
+
+class BTCond_Model_R7500(StellarSpecModel):
+    """
+    Represents the BTCond stellar spectral model.
+
+    This class specializes the StellarSpecModel for BTCond model.
+
+    Attributes:
+        None
+    """
+
+    def __init__(self):
+        """
+        Initialize the BTCond_Model.
+
+        Args:
+            None
+
+        Returns:
+            BTCond_Model: An instance of the BTCond_Model class.
+        """
+        grid_name = 'BTCond_R7500'
+        file_name, url, md5_value = config.grid_names[grid_name]
+        abs_filename = os.path.join(config.grid_data_dir, file_name)
+        if not os.path.exists(abs_filename):
+            config.fetch_grid(grid_name)
+        super().__init__(abs_filename)
+
+
+class BTCond_Model_R1800(StellarSpecModel):
+    """
+    Represents the BTCond stellar spectral model.
+
+    This class specializes the StellarSpecModel for BTCond model.
+
+    Attributes:
+        None
+    """
+
+    def __init__(self):
+        """
+        Initialize the BTCond_Model.
+
+        Args:
+            None
+
+        Returns:
+            BTCond_Model: An instance of the BTCond_Model class.
+        """
+        grid_name = 'BTCond_R1800'
+        file_name, url, md5_value = config.grid_names[grid_name]
+        abs_filename = os.path.join(config.grid_data_dir, file_name)
+        if not os.path.exists(abs_filename):
+            config.fetch_grid(grid_name)
+        super().__init__(abs_filename)
+
+
+class BTCond_Model_R500(StellarSpecModel):
+    """
+    Represents the BTCond stellar spectral model.
+
+    This class specializes the StellarSpecModel for BTCond model.
+
+    Attributes:
+        None
+    """
+
+    def __init__(self):
+        """
+        Initialize the BTCond_Model.
+
+        Args:
+            None
+
+        Returns:
+            BTCond_Model: An instance of the BTCond_Model class.
+        """
+        grid_name = 'BTCond_R500'
+        file_name, url, md5_value = config.grid_names[grid_name]
+        abs_filename = os.path.join(config.grid_data_dir, file_name)
+        if not os.path.exists(abs_filename):
+            config.fetch_grid(grid_name)
+        super().__init__(abs_filename)
+
+
+class BTCond_Model_R100(StellarSpecModel):
+    """
+    Represents the BTCond stellar spectral model.
+
+    This class specializes the StellarSpecModel for BTCond model.
+
+    Attributes:
+        None
+    """
+
+    def __init__(self):
+        """
+        Initialize the BTCond_Model.
+
+        Args:
+            None
+
+        Returns:
+            BTCond_Model: An instance of the BTCond_Model class.
+        """
+        grid_name = 'BTCond_R100'
+        file_name, url, md5_value = config.grid_names[grid_name]
+        abs_filename = os.path.join(config.grid_data_dir, file_name)
+        if not os.path.exists(abs_filename):
+            config.fetch_grid(grid_name)
+        super().__init__(abs_filename)
