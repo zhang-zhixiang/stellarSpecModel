@@ -8,6 +8,8 @@ from .stellarSpecModel import BTCond_Model_R7500
 from .stellarSpecModel import BTCond_Model_R1800
 from .stellarSpecModel import BTCond_Model_R500
 from .stellarSpecModel import BTCond_Model_R100
+from .tlusty import TlustyModel
+from .tlustyWD import TlustyWDModel
 
 
 __version__ = '0.1.0'

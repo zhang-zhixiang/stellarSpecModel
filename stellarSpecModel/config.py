@@ -16,6 +16,8 @@ grid_names = {
     'BTCond_R1800': ('BTCond_grid_R1800.hdf5', 'https://www.jianguoyun.com/p/DZmcNoUQ2ZfcCBjW-5cFIAA', '13949b96cd54c0e28c7feac0656de095'),
     'BTCond_R500': ('BTCond_grid_R500.hdf5', 'https://www.jianguoyun.com/p/DZmcNoUQ2ZfcCBjW-5cFIAA', '78760504b53f79f1db4f7ebf268b9792'),
     'BTCond_R100': ('BTCond_grid_R100.hdf5', 'https://www.jianguoyun.com/p/DZmcNoUQ2ZfcCBjW-5cFIAA', '00a4a89098814cb64c37a7d7fd5fe6cc'),
+    'TLUSTY': ('tlusty_grid.hdf5', 'None', 'e217eca14a511acc02a0e4cf2ec00d75'),
+    'TLUSTYWD': ('TlustyGrids.hdf5', 'None', '63e818f785d87fe84bd5b0095ca0fd81'),
 }
 
 
