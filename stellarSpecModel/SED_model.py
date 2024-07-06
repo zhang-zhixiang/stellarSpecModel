@@ -66,17 +66,21 @@ class SEDModel:
         width = tfilter.width.to('AA').value
         self.filters[std_filtername] = [waves, trans, eff_wave, width]
 
-    def get_SED_spec(self, teff, logg, feh, R, distance, Av=0.0):
+    def add_bands(self, bands):
+        for band in bands:
+            self.add_band(band)
+
+    def get_SED_spec(self):
         waves = self.stellar_model.wavelength
-        fluxes = self.stellar_model.get_flux(teff, feh, logg)
-        rat = (R / distance * self._rat_rsun_pc) ** 2
+        fluxes = self.stellar_model.get_flux(self.teff, self.feh, self.logg)
+        rat = (self.rad / self.distance * self._rat_rsun_pc) ** 2
         fluxes *= rat
-        ext = fitzpatrick99(waves, Av, self.Rv)
+        ext = fitzpatrick99(waves, self.Av, self.Rv)
         nfluxes = apply(ext, fluxes)
         return waves, nfluxes
 
-    def get_SED(self, teff, logg, feh, R, distance, Av=0.0):
-        waves, fluxes = self.get_SED_spec(teff, logg, feh, R, distance, Av)
+    def get_SED(self):
+        waves, fluxes = self.get_SED_spec()
         waves_out, fluxes_out = [], []
         for band in self.bands:
             wave_filter, transmit, eff_wave, width = self.filters[band]
@@ -88,21 +92,26 @@ class SEDModel:
             fluxes_out.append(flux_int)
         return np.array(waves_out), np.array(fluxes_out)
 
-    def get_SED_mags(self, teff, logg, feh, R, distance, Av=0.0):
-        waves, fluxes = self.get_SED(teff, logg, feh, R, distance, Av)
+    def get_SED_mags(self):
+        waves, fluxes = self.get_SED()
         mags = [f2m(flux, 0.0, filtname)[0] for filtname, flux in zip(self.bands, fluxes)]
         mags = np.array(mags)
         return mags
 
-    def plot(self, teff, logg, feh, R, distance, Av=0.0, ax=None, show=False):
-        wave_spec, fluxe_spec = self.get_SED_spec(teff, logg, feh, R, distance, Av)
-        wave_sed, fluxe_sed = self.get_SED(teff, logg, feh, R, distance, Av)
+    def plot(self, ax=None, show=False):
+        wave_spec, flux_spec = self.get_SED_spec()
+        wave_sed, fluxe_sed = self.get_SED()
+        wmin = 1200
+        wmax = 30 * 10000
+        arg = np.where((wave_spec > wmin) & (wave_spec < wmax))
+        wave_spec = wave_spec[arg]
+        flux_spec = flux_spec[arg]
         if ax is None:
             import matplotlib.pyplot as plt
             fig = plt.figure(figsize=(8, 6))
             ax = fig.add_subplot(111)
-            ax.plot(wave_spec, fluxe_spec, label='spec')
-            ax.errorbar(wave_sed, fluxe_sed, fmt='o', color='red', ms=5, label='sed')
+            ax.plot(wave_spec, flux_spec, label='Spec')
+            ax.errorbar(wave_sed, fluxe_sed, fmt='o', color='red', ms=5, label='Phot')
             ax.set_xlabel('wavelength (AA)')
             ax.set_ylabel('flux (erg/s/cm2/AA)')
             ax.legend()
