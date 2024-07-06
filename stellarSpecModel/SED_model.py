@@ -1,9 +1,11 @@
-from astropy import constants as cs
-from extinction import fitzpatrick99
-from extinction import apply
+import io
+import contextlib
 import pyphot
 import spectool
 import numpy as np
+from extinction import apply
+from extinction import fitzpatrick99
+from astropy import constants as cs
 from . import stellarSpecModel
 from .phot_util import flux_to_mag as f2m
 from .phot_util import filtername2pyphotname
@@ -101,6 +103,11 @@ class SEDModel:
     def plot(self, ax=None, show=False):
         wave_spec, flux_spec = self.get_SED_spec()
         wave_sed, fluxe_sed = self.get_SED()
+        sedmin, sedmax = np.min(fluxe_sed), np.max(fluxe_sed)
+        logsedmin, logsedmax = np.log10(sedmin), np.log10(sedmax)
+        deltay = (logsedmax - logsedmin) / 10
+        ymin = 10 ** (logsedmin - deltay)
+        ymax = 10 ** (logsedmax + deltay)
         wmin = 1200
         wmax = 30 * 10000
         arg = np.where((wave_spec > wmin) & (wave_spec < wmax))
@@ -117,6 +124,7 @@ class SEDModel:
             ax.legend()
             ax.set_xscale('log')
             ax.set_yscale('log')
+            ax.set_ylim(ymin, ymax)
             if show is True:
                 plt.show()
             else:
@@ -129,38 +137,57 @@ class SEDModel:
             ("Metallicity (feh)", self.feh, "[Fe/H]"),
             ("Distance", self.distance, "pc"),
             ("Radius", self.rad, "R_sun"),
-            ("Extinction Coefficient (Av)", self.av, ""),
-            ("Bands", ', '.join(self.bands), "")
+            ("Extinction Coefficient (Av)", self.Av, ""),
         ]
-        max_length = max([len(name[0]) for name in params])
+        
+        max_length = max(len(name[0]) for name in params)
+        
         print("SED Model Parameters".center(max_length + 30, "="))
         for name, value, unit in params:
             if unit:
                 print(f"{name.ljust(max_length)} : {value} {unit}")
             else:
                 print(f"{name.ljust(max_length)} : {value}")
-        print("=" * (max_length + 30))
+
+        # 分块输出 bands
+        print("Bands".ljust(max_length), ": ", end="")
+        bands_per_line = 5
+        for i in range(0, len(self.bands), bands_per_line):
+            band_chunk = self.bands[i:i+bands_per_line]
+            if i > 0:
+                print(" " * (max_length + 3), end="")
+            print(", ".join(band_chunk))
+        print()
+        # print("=" * (max_length + 30))
 
     def _display_band_data(self):
         headers = ["Band", "Wavelength", "Width", "Flux", "Mag"]
         units = ["", "AA", "AA", "erg/s/cm2/AA", ""]
-        row_format = "{:<10} {:<15} {:<15} {:<15} {:<15}"
-        maxlength = len(row_format.format(*headers)) + 10
+        row_format = "{:<15} {:<15} {:<15} {:<15} {:<15}"
+        maxlength = len(row_format.format(*headers))
         print("SED Model Band Data".center(maxlength, "="))
         print(row_format.format(*headers))
         print(row_format.format(*units))
         print("=" * maxlength)
-        fluxes = self.get_SED_mags(self.teff, self.logg, self.feh, self.rad, self.distance, self.Av)
+        waves, fluxes = self.get_SED()
         mags = [f2m(flux, 0.0, filtname)[0] for filtname, flux in zip(self.bands, fluxes)]
         bands = self.bands
-        waves = [self.filters[i][2] for i in len(bands)]
-        widths = [self.filters[i][3] for i in len(bands)]
-        for band, wave, width, flux, mag in zip(bands, waves, widths, fluxes, mags):
+        waves_phot = [self.filters[band][2] for band in bands]
+        widths_phot = [self.filters[band][3] for band in bands]
+        for band, wave, width, flux, mag in zip(bands, waves_phot, widths_phot, fluxes, mags):
+            # print('type flux:', type(flux))
+            # print('flux =', flux)
             flux_str = f"{flux:.2e}"
             mag_str = f"{mag:.2f}"
-            print(row_format.format(band, wave, width, flux_str, mag_str))
+            wave_str = f"{wave:.1f}"
+            width_str = f"{width:.1f}"
+            print(row_format.format(band, wave_str, width_str, flux_str, mag_str))
         print("=" * maxlength)
 
     def __str__(self):
-        self._display_pars()
-        self._display_band_data()
+        output_capture = io.StringIO()
+        with contextlib.redirect_stdout(output_capture):
+            self._display_pars()
+            self._display_band_data()
+        captured_output = output_capture.getvalue()
+        return captured_output
