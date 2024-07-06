@@ -10,6 +10,7 @@ from .stellarSpecModel import BTCond_Model_R500
 from .stellarSpecModel import BTCond_Model_R100
 from .tlusty import TlustyModel
 from .tlustyWD import TlustyWDModel
+from .SED_model import SEDModel
 
 
 __version__ = '0.1.0'
