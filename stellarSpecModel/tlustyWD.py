@@ -5,6 +5,7 @@ import scipy.interpolate as spinterp
 from astropy import units as u
 import numpy as np
 import os
+import spectool
 
 
 class TlustyWDModel(StellarSpecModel):
@@ -24,7 +25,7 @@ class TlustyWDModel(StellarSpecModel):
         flux_grid = grid['flux'].astype(float)[:]
         model = spinterp.RegularGridInterpolator((teff_grid, logg_grid), np.log10(flux_grid.T))
         self._model = model
-        self._wavelength = wave
+        self._wavelength = spectool.spec_func.air2vac(wave)
         self._teff_grid = teff_grid
         self._logg_grid = logg_grid
 
