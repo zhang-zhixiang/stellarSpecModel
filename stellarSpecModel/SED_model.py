@@ -12,7 +12,24 @@ from .phot_util import filtername2pyphotname
 
 
 class SEDModel:
-    def __init__(self, bands=None, specmodel=stellarSpecModel.BTCond_Model()):
+    def __init__(self, bands=None, teff=5700, logg=4.5, feh=0.0, 
+                 R=1.0, distance=10.0, Av=0.0,
+                 specmodel=stellarSpecModel.BTCond_Model()):
+        """a class to generate stellar model SED
+
+        Args:
+            bands (list, optional): the band names of the SED, a example ['SDSSu', 'JV', 'SDSSr', '2MASSJ', 'W2']. Defaults to None.
+            teff (float, optional): temperature of the SED. Defaults to 5700.
+            logg (float, optional): surface gravity. Defaults to 4.5.
+            feh (float, optional): Metallicity. Defaults to 0.0.
+            R (float, optional): radius of the stellar, unit is R_sun. Defaults to 1.0.
+            distance (float, optional): distance of the stellar, unit is pc. Defaults to 10.0.
+            Av (float, optional): Extinction Coefficient. Defaults to 0.0.
+            specmodel (stellarSpecModel, optional): stellarSpecModel used to generate the stellar spectrum. Defaults to stellarSpecModel.BTCond_Model().
+
+        Raises:
+            ValueError: if specmodel is not an instance of StellarSpecModel, raise ValueError
+        """
         if isinstance(specmodel, stellarSpecModel.StellarSpecModel):
             self.stellar_model = specmodel
         else:
@@ -22,12 +39,12 @@ class SEDModel:
         self.pyphot_lib = pyphot.get_library()
         self._rat_rsun_pc = cs.R_sun.to('pc').value
         self.Rv = 3.1
-        self.teff = 5700
-        self.logg = 4.5
-        self.feh = 0.0
-        self.distance = 10.0
-        self.Av = 0.0
-        self.rad = 1.0
+        self.teff = teff
+        self.logg = logg
+        self.feh = feh
+        self.distance = distance
+        self.Av = Av
+        self.rad = R
         if bands is not None:
             for band in bands:
                 self.add_band(band)
