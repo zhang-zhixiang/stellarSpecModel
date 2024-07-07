@@ -8,7 +8,9 @@ from extinction import fitzpatrick99
 from astropy import constants as cs
 from . import stellarSpecModel
 from .phot_util import flux_to_mag as f2m
+from .phot_util import mag_to_flux as m2f
 from .phot_util import filtername2pyphotname
+from .phot_util import fluxes_to_mags, mags_to_fluxes
 
 
 class SEDModel:
@@ -208,3 +210,119 @@ class SEDModel:
             self._display_band_data()
         captured_output = output_capture.getvalue()
         return captured_output
+
+    def __repr__(self):
+        return self.__str__()
+
+
+class ObservedSEDModel(SEDModel):
+    def __init__(self, bands=None, teff=5700, logg=4.5, feh=0.0, 
+                 R=1.0, distance=10.0, Av=0.0,
+                 specmodel=stellarSpecModel.BTCond_Model(),
+                 observed_fluxes=None, observed_errors=None,
+                 observed_mags=None, observed_mag_errors=None):
+        """a class to generate and compare stellar model SED with observed data
+
+        Args:
+            bands (list, optional): the band names of the SED, a example ['SDSSu', 'JV', 'SDSSr', '2MASSJ', 'W2']. Defaults to None.
+            teff (float, optional): temperature of the SED. Defaults to 5700.
+            logg (float, optional): surface gravity. Defaults to 4.5.
+            feh (float, optional): Metallicity. Defaults to 0.0.
+            R (float, optional): radius of the stellar, unit is R_sun. Defaults to 1.0.
+            distance (float, optional): distance of the stellar, unit is pc. Defaults to 10.0.
+            Av (float, optional): Extinction Coefficient. Defaults to 0.0.
+            specmodel (stellarSpecModel, optional): stellarSpecModel used to generate the stellar spectrum. Defaults to stellarSpecModel.BTCond_Model().
+            observed_fluxes (list, optional): observed fluxes for the bands. Defaults to None.
+            observed_errors (list, optional): errors in the observed fluxes. Defaults to None.
+            observed_mags (list, optional): observed magnitudes for the bands. Defaults to None.
+            observed_mag_errors (list, optional): errors in the observed magnitudes. Defaults to None.
+
+        Raises:
+            ValueError: if specmodel is not an instance of StellarSpecModel, raise ValueError
+        """
+        super().__init__(bands, teff, logg, feh, R, distance, Av, specmodel)
+        self.obs_mags = []
+        self.obs_mag_errs = []
+        self.obs_fluxes = []
+        self.obs_flux_errs = []
+        self.add_data(bands)
+
+    def _add_mere_data(self, bands=None, obs_mags=None, obs_mag_errs=None, obs_fluxes=None, obs_flux_errs=None):
+        obs_mags, obs_mag_errs, obs_fluxes, obs_flux_errs = self._complete_obsdata(bands, obs_mags, obs_mag_errs, obs_fluxes, obs_flux_errs)
+        for mag, mag_err, flux, flux_err in zip(obs_mags, obs_mag_errs, obs_fluxes, obs_flux_errs):
+            self.obs_mags.append(mag)
+            self.obs_mag_errs.append(mag_err)
+            self.obs_fluxes.append(flux)
+            self.obs_flux_errs.append(flux_err)
+
+    def add_data(self, bands, obs_mags=None, obs_mag_errs=None, obs_fluxes=None, obs_flux_errs=None):
+        """add data to the ObservedSEDModel"""
+        if isinstance(bands, str):
+            self.add_band(bands)
+        else:
+            self.add_bands(bands)
+        self._add_mere_data(bands, obs_mags, obs_mag_errs, obs_fluxes, obs_flux_errs)
+
+    def _complete_obsdata(self, bands, obs_mags=None, obs_mag_errs=None, obs_fluxes=None, obs_flux_errs=None):
+        if obs_mags is None and obs_fluxes is None:
+            raise ValueError("Either obs_mags or obs_fluxes must be provided.")
+        if isinstance(bands, str):
+            bands = [bands, ]
+            if obs_mags is not None:
+                obs_mags = [obs_mags, ]
+                obs_mag_errs = [obs_mag_errs, ]
+            else:
+                obs_fluxes = [obs_fluxes, ]
+                obs_flux_errs = [obs_flux_errs, ]
+        if obs_mags is not None:
+            obs_fluxes, obs_flux_errs = [], []
+            for mag, err, band in zip(obs_mags, obs_mag_errs, bands):
+                flux, flux_err = m2f(mag, err, band)
+                obs_fluxes.append(flux)
+                obs_flux_errs.append(flux_err)
+        else:
+            obs_mags, obs_mag_errs = [], []
+            for flux, err, band in zip(obs_fluxes, obs_flux_errs, bands):
+                mag, mag_err = f2m(flux, err, band)
+                obs_mags.append(mag)
+                obs_mag_errs.append(mag_err)
+        return obs_mags, obs_mag_errs, obs_fluxes, obs_flux_errs
+
+    def get_chisq(self):
+        """calculate the chi-squared value of the observed data and the model
+        """
+        fluxes_model = self.get_SED()[1]
+        chisq = np.sum((self.obs_fluxes - fluxes_model)**2/self.obs_flux_errs**2)
+        return chisq
+
+    def _display_observations(self):
+        headers = ["Band", "Wavelength", "Observed Flux", "Error", "Observed Magnitude", "Mag Error"]
+        units = ["", "AA", "erg/s/cm2/AA", "erg/s/cm2/AA", "", ""]
+        row_format = "{:<15} {:<15} {:<15} {:<15} {:<15} {:<15}"
+        maxlength = len(row_format.format(*headers))
+        print("Observed Data".center(maxlength, "="))
+        print(row_format.format(*headers))
+        print(row_format.format(*units))
+        print("=" * maxlength)
+        
+        bands = self.bands
+        waves_phot = [self.filters[band][2] for band in bands]
+        for band, wave, obs_flux, error, obs_mag, mag_err in zip(bands, waves_phot, self.obs_fluxes, self.obs_flux_errs, self.obs_mags, self.obs_mag_errs):
+            obs_flux_str = f"{obs_flux:.2e}"
+            error_str = f"{error:.2e}"
+            obs_mag_str =f"{obs_mag:.2f}"
+            obs_mag_err_str = f"{mag_err:.2f}"
+            print(row_format.format(band, wave, obs_flux_str, error_str, obs_mag_str, obs_mag_err_str))
+        # print("=" * maxlength)
+
+    def __str__(self):
+        output_capture = io.StringIO()
+        with contextlib.redirect_stdout(output_capture):
+            self._display_pars()
+            self._display_band_data()
+            self._display_observations()
+        captured_output = output_capture.getvalue()
+        return captured_output
+
+    def __repr__(self):
+        return self.__str__()

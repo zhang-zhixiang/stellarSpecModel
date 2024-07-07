@@ -98,6 +98,18 @@ def mag_to_flux(mag, mag_err, filtername):
         return flux, flux_err
 
 
+def mags_to_fluxes(mags, mag_errs, filternames):
+    if isinstance(filternames, str):
+        return mag_to_flux(mags, mag_errs, filternames)
+    else:
+        fluxes, flux_errs = [], []
+        for mag, mag_err, filtername in zip(mags, mag_errs, filternames):
+            flux, flux_err = mag_to_flux(mag, mag_err, filtername)
+            fluxes.append(flux)
+            flux_errs.append(flux_err)
+        return np.array(fluxes), np.array(flux_errs)
+
+
 def flux_to_mag(flux, flux_err, filtername):
     """convert a input flux to magnitude
        unit of flux: erg/s/cm**2/AA
@@ -114,3 +126,15 @@ def flux_to_mag(flux, flux_err, filtername):
         mag = -2.5 * np.log10(flux / f0)
         mag_err = 2.5 * flux_err / (np.log(10) * flux)
         return mag, mag_err
+
+
+def fluxes_to_mags(fluxes, flux_errs, filternames):
+    if isinstance(filternames, str):
+        return flux_to_mag(fluxes, flux_errs, filternames)
+    else:
+        mags, mag_errs = [], []
+        for flux, flux_err, filtername in zip(fluxes, flux_errs, filternames):
+            mag, mag_err = flux_to_mag(flux, flux_err, filtername)
+            mags.append(mag)
+            mag_errs.append(mag_err)
+        return np.array(mags), np.array(mag_errs)
