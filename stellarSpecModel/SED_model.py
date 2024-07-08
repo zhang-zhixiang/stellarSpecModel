@@ -6,6 +6,7 @@ import numpy as np
 from extinction import apply
 from extinction import fitzpatrick99
 from astropy import constants as cs
+import matplotlib.pyplot as plt
 from . import stellarSpecModel
 from .phot_util import flux_to_mag as f2m
 from .phot_util import mag_to_flux as m2f
@@ -127,13 +128,19 @@ class SEDModel:
         deltay = (logsedmax - logsedmin) / 10
         ymin = 10 ** (logsedmin - deltay)
         ymax = 10 ** (logsedmax + deltay)
+
+        wmin, wmax = np.min(wave_sed), np.max(wave_sed)
+        logwmin, logwavemax = np.log10(wmin), np.log10(wmax)
+        deltax = (logwavemax - logwmin) / 10
+        xmin = 10 ** (logwmin - deltax)
+        xmax = 10 ** (logwavemax + deltax)
+
         wmin = 1200
         wmax = 30 * 10000
         arg = np.where((wave_spec > wmin) & (wave_spec < wmax))
         wave_spec = wave_spec[arg]
         flux_spec = flux_spec[arg]
         if ax is None:
-            import matplotlib.pyplot as plt
             fig = plt.figure(figsize=(8, 6))
             ax = fig.add_subplot(111)
             ax.plot(wave_spec, flux_spec, label='Spec')
@@ -144,6 +151,7 @@ class SEDModel:
             ax.set_xscale('log')
             ax.set_yscale('log')
             ax.set_ylim(ymin, ymax)
+            ax.set_xlim(xmin, xmax)
             if show is True:
                 plt.show()
             else:
@@ -182,7 +190,7 @@ class SEDModel:
     def _display_band_data(self):
         headers = ["Band", "Wavelength", "Width", "Flux", "Mag"]
         units = ["", "AA", "AA", "erg/s/cm2/AA", ""]
-        row_format = "{:<15} {:<15} {:<15} {:<15} {:<15}"
+        row_format = "{:<18} {:<15} {:<15} {:<15} {:<15}"
         maxlength = len(row_format.format(*headers))
         print("SED Model Band Data".center(maxlength, "="))
         print(row_format.format(*headers))
@@ -201,7 +209,8 @@ class SEDModel:
             wave_str = f"{wave:.1f}"
             width_str = f"{width:.1f}"
             print(row_format.format(band, wave_str, width_str, flux_str, mag_str))
-        print("=" * maxlength)
+        print()
+        # print("=" * maxlength)
 
     def __str__(self):
         output_capture = io.StringIO()
@@ -245,7 +254,7 @@ class ObservedSEDModel(SEDModel):
         self.obs_mag_errs = []
         self.obs_fluxes = []
         self.obs_flux_errs = []
-        self.add_data(bands)
+        self._add_mere_data(bands, observed_mags, observed_mag_errors, observed_fluxes, observed_errors)
 
     def _add_mere_data(self, bands=None, obs_mags=None, obs_mag_errs=None, obs_fluxes=None, obs_flux_errs=None):
         obs_mags, obs_mag_errs, obs_fluxes, obs_flux_errs = self._complete_obsdata(bands, obs_mags, obs_mag_errs, obs_fluxes, obs_flux_errs)
@@ -296,10 +305,10 @@ class ObservedSEDModel(SEDModel):
         return chisq
 
     def _display_observations(self):
-        headers = ["Band", "Wavelength", "Observed Flux", "Error", "Observed Magnitude", "Mag Error"]
+        headers = ["Band", "Wavelength", "Observed Flux", "Error", "Observed Mag", "Mag Error"]
         units = ["", "AA", "erg/s/cm2/AA", "erg/s/cm2/AA", "", ""]
-        row_format = "{:<15} {:<15} {:<15} {:<15} {:<15} {:<15}"
-        maxlength = len(row_format.format(*headers))
+        row_format = "{:<18} {:<15} {:<15} {:<15} {:<15} {:<15}"
+        maxlength = len(row_format.format(*headers).strip())
         print("Observed Data".center(maxlength, "="))
         print(row_format.format(*headers))
         print(row_format.format(*units))
@@ -308,12 +317,23 @@ class ObservedSEDModel(SEDModel):
         bands = self.bands
         waves_phot = [self.filters[band][2] for band in bands]
         for band, wave, obs_flux, error, obs_mag, mag_err in zip(bands, waves_phot, self.obs_fluxes, self.obs_flux_errs, self.obs_mags, self.obs_mag_errs):
+            wave_str = f"{wave:.2f}"
             obs_flux_str = f"{obs_flux:.2e}"
             error_str = f"{error:.2e}"
             obs_mag_str =f"{obs_mag:.2f}"
             obs_mag_err_str = f"{mag_err:.2f}"
-            print(row_format.format(band, wave, obs_flux_str, error_str, obs_mag_str, obs_mag_err_str))
+            print(row_format.format(band, wave_str, obs_flux_str, error_str, obs_mag_str, obs_mag_err_str))
         # print("=" * maxlength)
+
+    def plot(self, ax=None, show=False):
+        ax = super().plot(ax=ax, show=False)
+        waves_sed, fluxes_sed = self.get_SED()
+        ax.errorbar(waves_sed, self.obs_fluxes, yerr=self.obs_flux_errs, fmt="s", label="Observed Data", markersize=5, color='k')
+        ax.legend()
+        if show:
+            plt.show()
+        else:
+            return ax
 
     def __str__(self):
         output_capture = io.StringIO()
