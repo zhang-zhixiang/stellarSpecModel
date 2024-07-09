@@ -39,6 +39,8 @@ class SEDModel:
             raise ValueError('specmodel must be an instance of StellarSpecModel')
         self.bands = []
         self.filters = {}
+        self.eff_waves_SED = []
+        self.widths_band = []
         self.pyphot_lib = pyphot.get_library()
         self._rat_rsun_pc = cs.R_sun.to('pc').value
         self.Rv = 3.1
@@ -86,7 +88,9 @@ class SEDModel:
         trans = tfilter.transmit
         eff_wave = tfilter.leff.to('AA').value
         width = tfilter.width.to('AA').value
-        self.filters[std_filtername] = [waves, trans, eff_wave, width]
+        self.filters[std_filtername] = [waves, trans]
+        self.eff_waves_SED.append(eff_wave)
+        self.widths_band.append(width)
 
     def add_bands(self, bands):
         for band in bands:
@@ -104,8 +108,9 @@ class SEDModel:
     def get_SED(self):
         waves, fluxes = self.get_SED_spec()
         waves_out, fluxes_out = [], []
-        for band in self.bands:
-            wave_filter, transmit, eff_wave, width = self.filters[band]
+        for ind, band in enumerate(self.bands):
+            wave_filter, transmit = self.filters[band]
+            eff_wave = self.eff_waves_SED[ind]
             flux_interp = spectool.pyrebin.rebin_padvalue(waves, fluxes, wave_filter)
             widths = np.diff(wave_filter)
             widths = np.append(widths, widths[-1])
@@ -199,8 +204,8 @@ class SEDModel:
         waves, fluxes = self.get_SED()
         mags = [f2m(flux, 0.0, filtname)[0] for filtname, flux in zip(self.bands, fluxes)]
         bands = self.bands
-        waves_phot = [self.filters[band][2] for band in bands]
-        widths_phot = [self.filters[band][3] for band in bands]
+        waves_phot = self.eff_waves_SED
+        widths_phot = self.widths_band
         for band, wave, width, flux, mag in zip(bands, waves_phot, widths_phot, fluxes, mags):
             # print('type flux:', type(flux))
             # print('flux =', flux)
@@ -315,7 +320,7 @@ class ObservedSEDModel(SEDModel):
         print("=" * maxlength)
         
         bands = self.bands
-        waves_phot = [self.filters[band][2] for band in bands]
+        waves_phot = self.eff_waves_SED
         for band, wave, obs_flux, error, obs_mag, mag_err in zip(bands, waves_phot, self.obs_fluxes, self.obs_flux_errs, self.obs_mags, self.obs_mag_errs):
             wave_str = f"{wave:.2f}"
             obs_flux_str = f"{obs_flux:.2e}"
