@@ -259,6 +259,7 @@ class ObservedSEDModel(SEDModel):
         self.obs_mag_errs = []
         self.obs_fluxes = []
         self.obs_flux_errs = []
+        self.sys_errs = []
         self._add_mere_data(bands, observed_mags, observed_mag_errors, observed_fluxes, observed_errors)
 
     def _add_mere_data(self, bands=None, obs_mags=None, obs_mag_errs=None, obs_fluxes=None, obs_flux_errs=None):
@@ -276,6 +277,13 @@ class ObservedSEDModel(SEDModel):
         else:
             self.add_bands(bands)
         self._add_mere_data(bands, obs_mags, obs_mag_errs, obs_fluxes, obs_flux_errs)
+        self.sys_errs.append(0.0)
+
+    def set_syserr_all(self, sys_err):
+        if isinstance(sys_err, float):
+            self.sys_errs = [sys_err, ] * len(self.bands)
+        else:
+            self.sys_errs = sys_err
 
     def _complete_obsdata(self, bands, obs_mags=None, obs_mag_errs=None, obs_fluxes=None, obs_flux_errs=None):
         if obs_mags is None and obs_fluxes is None:
@@ -308,6 +316,13 @@ class ObservedSEDModel(SEDModel):
         fluxes_model = self.get_SED()[1]
         chisq = np.sum((self.obs_fluxes - fluxes_model)**2/self.obs_flux_errs**2)
         return chisq
+
+    def get_log_likelihood(self):
+        sigmas = np.sqrt(np.array(self.obs_flux_errs)**2 + np.array(self.sys_errs)**2)
+        fluxes_data = np.array(self.obs_fluxes)
+        fluxes_model = self.get_SED()[1]
+        log_likelihood = -0.5 * np.sum(((fluxes_data - fluxes_model)/sigmas)**2) - np.sum(np.log(sigmas))
+        return log_likelihood
 
     def _display_observations(self):
         headers = ["Band", "Wavelength", "Observed Flux", "Error", "Observed Mag", "Mag Error"]

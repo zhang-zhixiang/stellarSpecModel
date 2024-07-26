@@ -11,6 +11,7 @@ from .stellarSpecModel import BTCond_Model_R100
 from .tlusty import TlustyModel
 from .tlustyWD import TlustyWDModel
 from .SED_model import SEDModel
+from .binary_SED_model import BinarySEDModel
 
 
 __version__ = '0.1.0'

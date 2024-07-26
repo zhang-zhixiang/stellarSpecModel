@@ -11,6 +11,25 @@ _dic_filternames = dict([i.split() for i in open(_ftablename)])
 _lib = pyphot.get_library()
 
 
+def load_local_filter(bandname):
+    abs_finfo = os.path.join(_absdir, 'filter_data', 'filter_info.txt')
+    dic_local_filters = dict([i.split() for i in open(abs_finfo)])
+    if bandname in dic_local_filters:
+        fname = dic_local_filters[bandname]
+        abs_fname = os.path.join(_absdir, 'filter_data', fname)
+        data = np.loadtxt(abs_fname)
+        waves = data[:, 0]
+        trans = data[:, 1]
+        eff_wave = np.sum(waves*trans) / np.sum(trans)
+        widths = np.diff(waves)
+        widths = np.append(widths, widths[-1])
+        sumflux = np.sum(trans*widths)
+        width = sumflux / np.mean(trans)
+        return waves, trans, eff_wave, width
+    else:
+        raise ValueError('filter name {} is not supported'.format(bandname))
+
+
 def filtername2pyphotname(filtername):
     """convert a input filter name to pyphot filter name. For example, input 'SDSS:r' or 'SDSSr' will return 'SDSS_r'
 
@@ -114,6 +133,8 @@ def flux_to_mag(flux, flux_err, filtername):
     """convert a input flux to magnitude
        unit of flux: erg/s/cm**2/AA
     """
+    if filtername not in _lib.content:
+        return np.nan, np.nan
     pyphot_name = filtername2pyphotname(filtername)
     if 'PS1_' in pyphot_name or 'SDSS_' in pyphot_name or 'GALEX_' in pyphot_name:
         wave_eff= get_effective_wavelength(pyphot_name)
