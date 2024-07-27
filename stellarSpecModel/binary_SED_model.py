@@ -249,7 +249,7 @@ class BinarySEDModel:
         fluxes_obs = np.array(self._obs_fluxes)
         fluxerrs_obs = np.array(self._obs_fluxerrs)
 
-        sedmin, sedmax = np.min(SED_model), np.max(SED_model)
+        sedmin, sedmax = np.min(wave_SED1 * SED_model), np.max(wave_SED1 * SED_model)
         logsedmin, logsedmax = np.log10(sedmin), np.log10(sedmax)
         deltay = (logsedmax - logsedmin) / 10
         ymin = 10 ** (logsedmin - deltay)
@@ -265,13 +265,13 @@ class BinarySEDModel:
             fig = plt.figure(figsize=(8, 6))
             ax = fig.add_subplot(111)
         
-        ax.plot(wave_spec1, flux_spec1, label='Spec1')
-        ax.plot(wave_spec2, flux_spec2, label='Spec2')
-        ax.plot(wave_spec, flux_spec, label='Spec1 + Spec2')
+        ax.plot(wave_spec1, wave_spec1 * flux_spec1, label='Spec1')
+        ax.plot(wave_spec2, wave_spec2 * flux_spec2, label='Spec2')
+        ax.plot(wave_spec, wave_spec * flux_spec, label='Spec1 + Spec2')
 
         # ax.errorbar(wave_SED1, SED1_model, fmt='o', ms=5, label='SED model 1')
         # ax.errorbar(wave_SED1, SED2_model, fmt='o', ms=5, label='SED model 2')
-        ax.errorbar(wave_SED1, SED_model, fmt='o', ms=5, label='Combined SED model')
+        ax.errorbar(wave_SED1, wave_SED1 * SED_model, fmt='o', ms=5, label='Combined SED model')
 
         # print(fluxes_obs)
         arg = np.isfinite(fluxes_obs)
@@ -279,10 +279,10 @@ class BinarySEDModel:
         fluxes_obs = fluxes_obs[arg]
         fluxerrs_obs = fluxerrs_obs[arg]
         if len(wave_SED1) > 0:
-            ax.errorbar(wave_SED1, fluxes_obs, yerr=fluxerrs_obs, fmt='s', label='Observed data', markersize=5, color='k')
+            ax.errorbar(wave_SED1, wave_SED1 * fluxes_obs, yerr=fluxerrs_obs, fmt='s', label='Observed data', markersize=5, color='k')
 
         ax.set_xlabel('wavelength (AA)')
-        ax.set_ylabel('flux (erg/s/cm2/AA)')
+        ax.set_ylabel('lambda * flux (erg/s/cm2)')
 
         ax.legend()
         ax.set_xscale('log')
