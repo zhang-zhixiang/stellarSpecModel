@@ -10,6 +10,7 @@ from .phot_util import fluxes_to_mags as f2ms
 from .phot_util import mags_to_fluxes as m2fs
 from .phot_util import filtername2pyphotname as f2p
 from .phot_util import load_local_filter
+from . import phot_util
 
 
 class BinarySEDModel:
@@ -60,16 +61,16 @@ class BinarySEDModel:
         self.syserr = syserr if syserr is not None else self.syserr
 
     def _load_filter(self, bandname):
-        try:
+        if bandname in phot_util._dic_local_f:
+            waves, trans, eff_wave, width = phot_util.load_local_filter(bandname)
+        else:
             tfilter = self._pyphot_lib[bandname]
             waves = tfilter.wavelength.to('AA').value
             trans = tfilter.transmit
             eff_wave = tfilter.leff.to('AA').value
             width = tfilter.width.to('AA').value
-            return waves, trans, eff_wave, width
-        except Exception:
-            return load_local_filter(bandname)
-
+        return waves, trans, eff_wave, width
+        
     def add_data(self, bands, obs_mags=None, obs_magerrs=None, 
                  obs_fluxes=None, obs_fluxerrs=None, 
                  obs_nufnus=None, obs_nufnuerrs=None):

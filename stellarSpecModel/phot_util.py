@@ -8,14 +8,14 @@ from astropy import units as u
 _absdir = os.path.dirname(os.path.abspath(__file__))
 _ftablename = os.path.join(_absdir, 'filter_name_table.txt')
 _dic_filternames = dict([i.split() for i in open(_ftablename)])
+_localfname = os.path.join(_absdir, 'filter_data', 'filter_info.txt')
+_dic_local_f = dict([i.split() for i in open(_localfname)])
 _lib = pyphot.get_library()
 
 
 def load_local_filter(bandname):
-    abs_finfo = os.path.join(_absdir, 'filter_data', 'filter_info.txt')
-    dic_local_filters = dict([i.split() for i in open(abs_finfo)])
-    if bandname in dic_local_filters:
-        fname = dic_local_filters[bandname]
+    if bandname in _dic_local_f:
+        fname = _dic_local_f[bandname]
         abs_fname = os.path.join(_absdir, 'filter_data', fname)
         data = np.loadtxt(abs_fname)
         waves = data[:, 0]
