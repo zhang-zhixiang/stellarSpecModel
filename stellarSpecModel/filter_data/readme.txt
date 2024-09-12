@@ -1,0 +1,1 @@
+The filter transmit curves of "AKARI_IRC.S9W.dat" and "WISE_WISE.W3.dat" are downloaded from http://svo2.cab.inta-csic.es/theory/main

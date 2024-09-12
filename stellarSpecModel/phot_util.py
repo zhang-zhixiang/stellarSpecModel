@@ -48,6 +48,8 @@ def get_effective_wavelength(filtername):
         filtername (str): the inputing filter name
     """
     pyphot_name = filtername2pyphotname(filtername)
+    if pyphot_name == 'WISE_RSR_W3':
+        return 115598.23320737253
     return _lib[pyphot_name].leff.to('AA').value
 
 

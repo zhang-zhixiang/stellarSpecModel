@@ -69,6 +69,8 @@ class BinarySEDModel:
             trans = tfilter.transmit
             eff_wave = tfilter.leff.to('AA').value
             width = tfilter.width.to('AA').value
+            if bandname == 'WISE_RSR_W3':
+                eff_wave = 115598.23320737253
         return waves, trans, eff_wave, width
         
     def add_data(self, bands, obs_mags=None, obs_magerrs=None, 
