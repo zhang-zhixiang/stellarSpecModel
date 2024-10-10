@@ -4,7 +4,7 @@ from hashlib import md5
 
 
 home_dir = os.path.expanduser('~')
-grid_data_dir = '{}/.stellarSpecModel/grid_data/'.format(home_dir)
+grid_data_dir = os.getenv('stellarSpecModel_grid_PATH', f'{home_dir}/.stellarSpecModel/grid_data/')
 
 grid_names = {
     # grid_name: (file_name, url, md5)
