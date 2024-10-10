@@ -25,6 +25,8 @@ def load_local_filter(bandname):
         widths = np.append(widths, widths[-1])
         sumflux = np.sum(trans*widths)
         width = sumflux / np.mean(trans)
+        if bandname == 'WISE_RSR_W3':
+            eff_wave = 115598.23320737253
         return waves, trans, eff_wave, width
     else:
         raise ValueError('filter name {} is not supported'.format(bandname))
