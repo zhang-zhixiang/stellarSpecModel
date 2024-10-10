@@ -114,3 +114,11 @@ TESS TESS
 SkyMapper/SkyMapper:z SkyMapper_z
 SkyMapper_z SkyMapper_z
 AKARI:S9W AKARI:S9W
+SkyMapper_u SkyMapper_u
+SkyMapper_v SkyMapper_v
+SkyMapper_g SkyMapper_g
+SkyMapper_r SkyMapper_r
+SkyMapper_i SkyMapper_i
+SkyMapper_z SkyMapper_z
+TYCHO_B_MvB TYCHO_B_MvB
+TYCHO_V_MvB TYCHO_V_MvB
