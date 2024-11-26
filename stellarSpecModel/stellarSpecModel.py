@@ -106,11 +106,11 @@ class StellarSpecModel:
             numpy.ndarray: Flux array.
         """
         if teff < self.min_teff or teff > self.max_teff:
-            raise ValueError('Teff outside of grid range')
+            raise ValueError('Teff = {} outside of grid range'.format(teff))
         if feh < self.min_feh or feh > self.max_feh:
-            raise ValueError('FeH outside of grid range')
+            raise ValueError('FeH = {} outside of grid range'.format(feh))
         if logg < self.min_logg or logg > self.max_logg:
-            raise ValueError('logg outside of grid range')
+            raise ValueError('logg = {} outside of grid range'.format(logg))
         log_flux = self._model((teff, feh, logg))
         return 10.0 ** log_flux
 
