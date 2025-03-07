@@ -1,37 +1,16 @@
-# stellarSpecModel
+# StellarSpecModel Documentation
 
-This is a simple package to interpolate the stellar spectral grid. Users provide stellar parameters (Teff, FeH, logg), the package will return the corresponding stellar spectrum.
+## Overview
 
-## Installation
+`StellarSpecModel` is a Python package to interpolate the stellar spectral grid. Users provide stellar parameters (Teff, FeH, logg), the package will return the corresponding stellar spectrum.
 
-You can install the package by using pip:
-```bash
-pip install git+https://github.com/zzxihep/stellarSpecModel.git
-```
-Some system may raise an error `error: externally-managed-environment`, you can try to add `--break-system-packages` to the command above.
-```bash
-pip install git+https://github.com/zzxihep/stellarSpecModel.git --break-system-packages
-```
-or clone the repository and install it:
-```bash
-git clone https://github.com/zzxihep/stellarSpecModel.git
-cd stellarSpecModel
-python setup.py install --user
-```
+This packagge also designed for generating and analyzing theoretical stellar spectral energy distributions (SEDs). The package includes functionality for both single and binary star systems, incorporating extinction models and the ability to handle photometric data in various filter bands.
 
-## Dependencies
+### Key Modules:
 
-The package depends on the following packages:
-- numpy
-- scipy
-- astropy
-- [selenium](https://github.com/SeleniumHQ/selenium) (optional, for downloading the grid)
+1. **SED_model**: This module is responsible for generating theoretical SEDs for a single star, given its parameters like effective temperature (`Teff`), metallicity (`FeH`), surface gravity (`logg`), radius of the star, distance of the star to observer, and extinction parameter. The model generates the flux across a range of wavelengths.
 
-The package need to download the stellar spectral grid from website, so you need to install [selenium](https://github.com/SeleniumHQ/selenium) to download the grids. Otherwise, you can download the grids manually and put them in the `~/.stellarSpecModel/grid_data/` folder. The URL of the grid files are:
-- [https://www.jianguoyun.com/p/DZmcNoUQ2ZfcCBjW-5cFIAA](https://www.jianguoyun.com/p/DZmcNoUQ2ZfcCBjW-5cFIAA)
-- [https://www.jianguoyun.com/p/Def5fgsQ2ZfcCBiYmpgFIAA](https://www.jianguoyun.com/p/Def5fgsQ2ZfcCBiYmpgFIAA)
-
-see more details in config.py
+2. **binary_SED_model**: This module extends the capabilities of the `SED_model` to handle binary star systems. It allows for the creation of composite SEDs from two stars, each with its own set of parameters. The model also includes the ability to apply extinction and calculate the resulting observed fluxes for each component of the binary system.
 
 ## Usage
 
@@ -106,6 +85,80 @@ logg grid of BTCond = [1.  1.5 2.  2.5 3.  3.5 4.  4.5 5. ]
 ```
 ![example](https://github.com/zzxihep/stellarSpecModel/blob/main/example.png)
 
-## Note
+## Detailed Descriptions of New Modules
 
-The flux of the grid spectrum corresponds to the flux received by an observer located at the surface of a star. Therefore, assuming that the radius of a star is equal to $1 R_\odot$, and the observer's position is at a distance of 100 parsecs, the received flux will be `nflux = flux * (cs.R_sun / (100*u.pc)).to('').value**2`.
+### 1. `SED_model`
+
+This module allows you to compute the SED for a single star based on its fundamental properties. The input parameters include the star's effective temperature (`Teff`), metallicity (`FeH`), surface gravity (`logg`), radius, and distance from the observer. The output is a wavelength-flux relationship that can be adjusted for extinction using the Fitzpatrick extinction law.
+
+#### Key Methods:
+- **get_SED_spec**: Generates the flux of a star as a function of wavelength.
+- **get_SED1 / get_SED2**: Get the SED for the first or second star (in the case of binary systems).
+- **get_SED**: Returns the combined SED of two stars (binary system).
+- **plot**: Plots the modelled SED against the observed data, if available, in both linear and logarithmic scales.
+
+#### Example Usage:
+
+```python
+from stellarSpecModel import SED_model
+
+# Initialize the model with parameters
+sed_model = SED_model(teff1=6000, feh1=-0.5, logg1=4.0, R1=1.0, D=100)
+
+# Get the SED for the first star
+wave_SED1, SED1 = sed_model.get_SED1()
+
+# Plot the SED
+sed_model.plot(show=True)
+```
+
+### 2. `binary_SED_model`
+
+This module handles the modeling of binary star systems by combining the individual SEDs of two stars. It computes the combined SED from both stars, considering parameters like their effective temperatures, metallicities, gravities, radii, and distances. Additionally, it can compute the chi-squared value and likelihood of the model given observed photometric data.
+
+#### Key Methods:
+- **get_SED_spec1 / get_SED_spec2**: Return the SED for each individual star in the binary system.
+- **get_SED**: Computes the combined SED for both stars in the system.
+- **add_data**: Allows the addition of photometric data (in magnitudes or fluxes) for comparing the model to observed data.
+- **get_chisq**: Calculates the chi-squared statistic for the model fit to observed data.
+- **get_lnlike**: Computes the log-likelihood for the observed data given the model.
+- **plot**: Plots the combined SED model with any available observed data.
+
+#### Example Usage:
+
+```python
+from stellarSpecModel import binary_SED_model
+
+# Initialize the binary model with two stars
+binary_model = binary_SED_model.BinarySEDModel(teff1=6000, feh1=-0.5, logg1=4.0, R1=1.0, 
+                                               teff2=5000, feh2=-1.0, logg2=4.5, R2=1.0, D=100)
+
+# Add photometric data (optional)
+binary_model.add_data(bands=["V", "J"], obs_mags=[12.3, 13.1], obs_magerrs=[0.02, 0.02])
+
+# Get the combined SED for the binary system
+wave_SED, combined_SED = binary_model.get_SED()
+
+# Plot the binary model SED
+binary_model.plot(show=True)
+```
+
+## Requirements
+
+To run `StellarSpecModel`, the following packages are required:
+
+- `numpy`
+- `pyphot`
+- `matplotlib`
+- `astropy`
+- `extinction`
+- [`spectool`](https://github.com/zhang-zhixiang/spectool)
+- [`selenium`](https://github.com/SeleniumHQ/selenium) (optional, for downloading the grids)
+
+## Installation
+
+You can install `StellarSpecModel` directly from the GitHub repository:
+
+```bash
+pip install git+https://github.com/zzxihep/stellarSpecModel.git
+```
