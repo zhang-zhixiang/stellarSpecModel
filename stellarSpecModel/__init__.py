@@ -14,4 +14,4 @@ from .SED_model import SEDModel
 from .binary_SED_model import BinarySEDModel
 
 
-__version__ = '0.1.0'
+__version__ = '1.0.0'
