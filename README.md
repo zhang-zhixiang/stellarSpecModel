@@ -160,5 +160,5 @@ To run `StellarSpecModel`, the following packages are required:
 You can install `StellarSpecModel` directly from the GitHub repository:
 
 ```bash
-pip install git+https://github.com/zzxihep/stellarSpecModel.git
+pip install git+https://github.com/zhang-zhixiang/stellarSpecModel.git
 ```
