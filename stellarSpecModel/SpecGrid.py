@@ -4,7 +4,7 @@ import datetime
 
 
 class SpecGrid:
-    def __init__(self, wave, axes, axis_names, flux_tensor, valid_mask=None, metadata=None):
+    def __init__(self, wave, axes, axis_names, flux_tensor, valid_mask=None, grid_parameters=None, metadata=None):
         """_summary_
         Args:
             wave (np.ndarray): 1D array, wavelength
@@ -32,6 +32,8 @@ class SpecGrid:
         else:
             self.valid_mask = np.ones(self.flux_tensor.shape[:-1], dtype=bool)
 
+        self.grid_parameters = grid_parameters or {}
+
         self.metadata = metadata if metadata is not None else {}
         self._init_default_metadata()
         self._validate_dimensions()
@@ -54,17 +56,23 @@ class SpecGrid:
             raise ValueError(f"Flux tensor shape {self.flux_tensor.shape} mismatches expected {expected_flux_shape}")
 
     @classmethod
-    def from_hdf5(cls, filepath):
+    def from_hdf5(cls, filepath, lazy=False):
         """load grid and the meta data from a hdf5 file从 HDF5"""
         with h5py.File(filepath, 'r') as f:
-            wave = f['wavelength'][:]
+            wave = f['wave'][:]
             
             axis_names = tuple(f.attrs['axis_names']) 
             
             axes = {}
             for name in axis_names:
                 axes[name] = f[f'axes/{name}'][:]
-                
+
+            grid_parameters = {}
+            if "grid_parameters" in f:
+                group = f["grid_parameters"]
+                for key in group.keys():
+                    grid_parameters[key] = group[key][:]
+
             flux_tensor = f['flux_tensor'][:]
             valid_mask = f['valid_mask'][:] if 'valid_mask' in f else None
 
@@ -73,12 +81,12 @@ class SpecGrid:
                 if key not in ['axis_names']:
                     metadata[key] = value
 
-            return cls(wave, axes, axis_names, flux_tensor, valid_mask, metadata)
+            return cls(wave, axes, axis_names, flux_tensor, valid_mask, grid_parameters, metadata)
 
     def to_hdf5(self, filepath):
         """save grid and metadata to hdf5 file"""
         with h5py.File(filepath, 'w') as f:
-            f.create_dataset('wavelength', data=self.wave)
+            f.create_dataset('wave', data=self.wave)
             f.create_dataset('flux_tensor', data=self.flux_tensor)
             if self.valid_mask is not None:
                 f.create_dataset('valid_mask', data=self.valid_mask)
@@ -90,3 +98,15 @@ class SpecGrid:
             
             for key, value in self.metadata.items():
                 f.attrs[key] = value
+
+    @property
+    def shape(self):
+        return self.flux_tensor.shape[:-1]
+
+    @property
+    def ndim(self):
+        return len(self.axis_names)
+
+    @property
+    def n_wave(self):
+        return len(self.wave)
