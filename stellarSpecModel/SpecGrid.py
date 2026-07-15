@@ -25,7 +25,7 @@ class SpecGrid:
         self.wave = np.asarray(wave)
         self.axes = axes
         self.axis_names = tuple(axis_names)
-        self.flux_tensor = np.asarray(flux_tensor)
+        self.flux_tensor = flux_tensor
         
         if valid_mask is not None:
             self.valid_mask = np.asarray(valid_mask)
@@ -56,7 +56,7 @@ class SpecGrid:
             raise ValueError(f"Flux tensor shape {self.flux_tensor.shape} mismatches expected {expected_flux_shape}")
 
     @classmethod
-    def from_hdf5(cls, filepath, lazy=False):
+    def from_hdf5(cls, filepath, lazy=True):
         """load grid and the meta data from a hdf5 file从 HDF5"""
         with h5py.File(filepath, 'r') as f:
             wave = f['wave'][:]
@@ -73,7 +73,7 @@ class SpecGrid:
                 for key in group.keys():
                     grid_parameters[key] = group[key][:]
 
-            flux_tensor = f['flux_tensor'][:]
+            flux_tensor = f['flux_tensor'] if lazy else f['flux_tensor'][:]
             valid_mask = f['valid_mask'][:] if 'valid_mask' in f else None
 
             metadata = {}
