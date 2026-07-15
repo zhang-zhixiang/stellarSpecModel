@@ -4,6 +4,11 @@ from hashlib import md5
 
 
 home_dir = os.path.expanduser('~')
+
+cache_PATH = os.getenv('stellarSpecModel_cache_PATH', f'{home_dir}/.stellarSpecModel/cache/')
+grid_PATH = os.getenv('stellarSpecModel_grid_PATH', f'{home_dir}/.stellarSpecModel/grid_data/')
+alias_PATH = os.getenv('stellarSpecModel_alias_PATH', f'{home_dir}/.stellarSpecModel/aliases/')
+
 grid_data_dir = os.getenv('stellarSpecModel_grid_PATH', f'{home_dir}/.stellarSpecModel/grid_data/')
 
 grid_names = {
