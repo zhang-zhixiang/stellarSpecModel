@@ -4,7 +4,8 @@ import datetime
 
 
 class SpecGrid:
-    def __init__(self, wave, axes, axis_names, flux_tensor, valid_mask=None, grid_parameters=None, metadata=None):
+    def __init__(self, wave, axes, axis_names, flux_tensor, valid_mask=None, 
+                 grid_parameters=None, metadata=None, h5_file=None):
         """_summary_
         Args:
             wave (np.ndarray): 1D array, wavelength
@@ -26,6 +27,8 @@ class SpecGrid:
         self.axes = axes
         self.axis_names = tuple(axis_names)
         self.flux_tensor = flux_tensor
+
+        self._h5_file = h5_file
         
         if valid_mask is not None:
             self.valid_mask = np.asarray(valid_mask)
@@ -58,7 +61,8 @@ class SpecGrid:
     @classmethod
     def from_hdf5(cls, filepath, lazy=True):
         """load grid and the meta data from a hdf5 file从 HDF5"""
-        with h5py.File(filepath, 'r') as f:
+        f = h5py.File(filepath, 'r')
+        try:
             wave = f['wave'][:]
             
             axis_names = tuple(f.attrs['axis_names']) 
@@ -81,7 +85,29 @@ class SpecGrid:
                 if key not in ['axis_names']:
                     metadata[key] = value
 
-            return cls(wave, axes, axis_names, flux_tensor, valid_mask, grid_parameters, metadata)
+            if not lazy:
+                f.close()
+                file_handle = None
+            else:
+                file_handle = f
+
+            return cls(wave, axes, axis_names, flux_tensor, valid_mask, 
+                       grid_parameters, metadata, h5_file=file_handle)
+        
+        except Exception as e:
+            f.close()
+            raise e
+
+    def close(self):
+        if getattr(self, '_h5_file', None) is not None:
+            self._h5_file.close()
+            self._h5_file = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
 
     def to_hdf5(self, filepath):
         """save grid and metadata to hdf5 file"""
