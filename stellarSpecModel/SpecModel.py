@@ -6,10 +6,10 @@ from pathlib import Path
 from scipy.interpolate import RegularGridInterpolator
 from tqdm.auto import tqdm
 from spectool import pyrebin
-from SpecGrid import SpecGrid
-# from .excepts import AliasAlreadyExistsError
-# from . import config
-import config
+from .SpecGrid import SpecGrid
+from .excepts import AliasAlreadyExistsError
+from . import config
+# import config
 
 
 class SpecModel:
@@ -47,17 +47,14 @@ class SpecModel:
 
         # 2. 规范化 wavelength
         norm_wave = {}
-        if "range" in wavelength:
-            norm_wave["range"] = list(wavelength["range"])
-            
-        if "resample" in wavelength:
-            resamp = wavelength["resample"]
-            if isinstance(resamp, dict):
-                norm_wave["resample"] = {k: resamp[k] for k in sorted(resamp.keys())}
-            elif isinstance(resamp, (list, np.ndarray)):
-                # 如果是自定义波长列，提取字节序列进行哈希，避免 JSON 过长
-                arr_bytes = np.asarray(resamp).tobytes()
-                norm_wave["resample_hash"] = hashlib.md5(arr_bytes).hexdigest()
+        for parm in wavelength:
+            value = wavelength[parm]
+            if parm == 'range':
+                norm_wave[parm] = list(value)
+            elif isinstance(value, np.ndarray):
+                norm_wave[parm] = np.asarray(value).tobytes()
+            else:
+                norm_wave[parm] = value
 
         # 3. 生成 JSON 字符串并 Hash
         fingerprint = {
@@ -399,16 +396,25 @@ class SpecModel:
         # 2.2 提取波长轴的索引
         wave_vals = self.grid.wave
         wave_mask = (wave_vals >= wave_range[0]) & (wave_vals <= wave_range[1])
-        # if wave_range:
-        #     wave_mask = (wave_vals >= wave_range[0]) & (wave_vals <= wave_range[1])
-        # else:
-        #     wave_mask = np.ones_like(wave_vals, dtype=bool)
         wave_keep_idx = np.where(wave_mask)[0]
 
-        flux_slice_tuple = tuple(slice_indices + [wave_keep_idx])
+        # flux_slice_tuple = tuple(slice_indices + [wave_keep_idx])
+        global_indices = slice_indices + [wave_keep_idx]
         mask_slice_tuple = tuple(slice_indices)
+
+        bounding_box_slices = []
+        local_indices = []
+
+        for idx_array in global_indices:
+            min_idx, max_idx = int(np.min(idx_array)), int(np.max(idx_array))
+            bounding_box_slices.append(slice(min_idx, max_idx + 1))
+            local_indices.append(idx_array - min_idx)
+                
+        bounding_box_slices = tuple(bounding_box_slices)
+
+        sub_flux_tensor = self.grid.flux_tensor[bounding_box_slices]
+        cropped_flux = sub_flux_tensor[np.ix_(*local_indices)]
         
-        cropped_flux = self.grid.flux_tensor[np.ix_(*flux_slice_tuple)]
         cropped_mask = self.grid.valid_mask[np.ix_(*mask_slice_tuple)]
         cropped_wave = wave_vals[wave_keep_idx]
         grid_pars = self.grid.grid_parameters
