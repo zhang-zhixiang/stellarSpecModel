@@ -485,7 +485,11 @@ class SpecModel:
                 f"Missing required grid parameters: {list(missing_params)}. "
                 f"Required parameters for this model are: {list(self.grid.axis_names)}"
             )
+            
         query_point = []
+        bounding_slices = []
+        local_axes = []
+        
         for param in self.grid.axis_names:
             val = kwargs[param]
             axis_arr = self.grid.axes[param]
@@ -496,18 +500,33 @@ class SpecModel:
                     f"Parameter '{param}'={val} is outside of the grid range [{min_val}, {max_val}]."
                 )
             query_point.append(val)
+            
+            # 定位当前参数所在的局部区间（找到紧邻的左右两个网格点）
+            # 假设网格轴是升序排列的
+            idx_left = np.searchsorted(axis_arr, val, side='right') - 1
+            idx_left = int(np.clip(idx_left, 0, len(axis_arr) - 2))
+            idx_right = idx_left + 1
+            
+            # 记录原生 slice 和局部坐标轴
+            bounding_slices.append(slice(idx_left, idx_right + 1))
+            local_axes.append(axis_arr[idx_left:idx_right + 1])
         
-        if not hasattr(self, '_interpolator'):
-            points = tuple(self.grid.axes[param] for param in self.grid.axis_names)
-            self._interpolator = RegularGridInterpolator(
-                points, 
-                self.grid.flux_tensor, 
-                method='linear', 
-                bounds_error=True, 
-                fill_value=np.nan
-            )
+        # 波长维度全量保留
+        bounding_slices.append(slice(None))
         
-        interpolated_flux = self._interpolator([query_point])[0]
+        # 核心：使用原生 slice 从 HDF5 中读取局部小块数据到内存 (例如 2x2x2xN 数组)
+        local_flux_tensor = self.grid.flux_tensor[tuple(bounding_slices)]
+        
+        # 使用全内存的小块数据临时建立局部插值器，极速且安全
+        local_interpolator = RegularGridInterpolator(
+            tuple(local_axes), 
+            local_flux_tensor, 
+            method='linear', 
+            bounds_error=True, 
+            fill_value=np.nan
+        )
+        
+        interpolated_flux = local_interpolator([query_point])[0]
         if np.any(np.isnan(interpolated_flux)):
             raise ValueError(
                 f"The requested parameters {kwargs} fall into a physical hole (invalid model region) in the grid."
