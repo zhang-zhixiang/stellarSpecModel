@@ -9,20 +9,21 @@ from spectool import pyrebin
 from .SpecGrid import SpecGrid
 from .excepts import AliasAlreadyExistsError
 from . import config
-# import config
+import logging
+logger = logging.getLogger(__name__)
 
 
 class SpecModel:
-    def __init__(self, grid):
+    def __init__(self, grid: SpecGrid):
         """
-        :param grid: SpecGrid 实例，包含底层的数据结构和元信息
+        :param grid: SpecGrid, including data and meta info
         """
         self.grid = grid
 
     @classmethod
     def load(cls, filepath):
         """
-        类方法：直接从 HDF5 文件实例化模型，方便研究者之间的数据流转分享。
+        class method: direct loading from HDF5 file
         """
         if not os.path.exists(filepath):
             raise FileNotFoundError(f"Derived grid file not found at {filepath}")
@@ -33,19 +34,18 @@ class SpecModel:
 
     def _generate_cache_key(self, select: dict, wavelength: dict) -> str:
         """
-        基于规范化后的 select 和 wavelength 生成唯一哈希指纹
+        Generate a unique hash fingerprint based on the normalized select and wavelength.
         """
-        # 1. 规范化 select
+        # Normalize select
         norm_select = {}
         for k in sorted(select.keys()):
             val = select[k]
-            # 统一转为 list 保证 JSON 序列化的确定性
+            # Convert to list to ensure deterministic JSON serialization
             if isinstance(val, (tuple, list, np.ndarray)):
                 norm_select[k] = np.asarray(val).tolist()
             else:
                 norm_select[k] = val
 
-        # 2. 规范化 wavelength
         norm_wave = {}
         for parm in wavelength:
             value = wavelength[parm]
@@ -56,7 +56,6 @@ class SpecModel:
             else:
                 norm_wave[parm] = value
 
-        # 3. 生成 JSON 字符串并 Hash
         fingerprint = {
             "selection": norm_select,
             "wavelength": norm_wave
@@ -65,7 +64,7 @@ class SpecModel:
         return hashlib.md5(fingerprint_str.encode('utf-8')).hexdigest()
 
     def _create_symlink(self, target_path, symlink_path, overwrite):
-        """创建操作系统软链接，作为预设网格的别名"""
+        """Create a symlink in the operating system as an alias for the preset grid."""
         try:
             if os.path.exists(symlink_path) or os.path.islink(symlink_path):
                 if overwrite:
@@ -73,9 +72,10 @@ class SpecModel:
                 else:
                     return
             os.symlink(os.path.abspath(target_path), symlink_path)
-            print(f"Symlink created: {os.path.basename(symlink_path)} -> {os.path.basename(target_path)}")
+            logger.info(f"Symlink created: {os.path.basename(symlink_path)} "
+                        f"-> {os.path.basename(target_path)}")
         except OSError as e:
-            print(f"Warning: Failed to create symlink ({e}).")
+            logger.warning("Failed to create symlink: %s", e)
 
     def _valid_wavelength(self, wavelength: dict | None = None):
         if wavelength is None:
@@ -343,7 +343,7 @@ class SpecModel:
                 )
 
         if cache_filepath.exists() and not overwrite:
-            print(f"Cache hit! Loading derived grid from {cache_filepath}...")
+            logger.info(f"Cache hit! Loading derived grid from {cache_filepath}")
             derived_model = self.__class__.load(cache_filepath)
             if alias:
                 self._create_symlink(cache_filepath, alias_filepath, overwrite=overwrite)
@@ -381,7 +381,6 @@ class SpecModel:
         slice_indices = []
         new_axes = {}
 
-        # 2.1 提取各个恒星参数轴的索引
         for param in self.grid.axis_names:
             axis_vals = self.grid.axes[param]
             if param in select_values:
@@ -393,7 +392,6 @@ class SpecModel:
             slice_indices.append(keep_idx)
             new_axes[param] = axis_vals[keep_idx]
 
-        # 2.2 提取波长轴的索引
         wave_vals = self.grid.wave
         wave_mask = (wave_vals >= wave_range[0]) & (wave_vals <= wave_range[1])
         wave_keep_idx = np.where(wave_mask)[0]
@@ -420,10 +418,6 @@ class SpecModel:
         grid_pars = self.grid.grid_parameters
         cropped_grid_pars = {param: grid_pars[param][np.ix_(*mask_slice_tuple)] for param in grid_pars}
 
-        # ==========================================
-        # 3. 波长重采样阶段 (只对切片后的小流量矩阵计算)
-        # ==========================================
-        # if target_wave is not None:
         if new_wave is not None:
             nflux_tensor = np.full(cropped_mask.shape + (len(new_wave),), np.nan, dtype=cropped_flux.dtype)
             iterator = np.ndindex(cropped_mask.shape)
@@ -441,16 +435,9 @@ class SpecModel:
                     nflux_tensor[idx] = lognflux
         else:
             nflux_tensor = cropped_flux
-            # final_wave = cropped_wave
-            # final_flux = cropped_flux
-            # space_type = self.grid.metadata.get('wave_sampling', 'unknown')
 
-        # ==========================================
-        # 4. 元数据血缘追踪与对象重装配
-        # ==========================================
         new_metadata = self.grid.metadata.copy()
         new_metadata['is_derived'] = True
-        # new_metadata['parent_hash'] = cache_key
         new_metadata['wave_sampling'] = method
         
         # 实例化新的底层网格
@@ -466,13 +453,9 @@ class SpecModel:
         
         new_model = self.__class__(new_grid)
 
-        # ==========================================
-        # 5. 数据落盘与别名绑定阶段
-        # ==========================================
-        # if cache_dir is not None:
-        print(f"Caching derived grid to {cache_filepath}...")
-        new_model.grid.to_hdf5(cache_filepath) # 直接利用底层 Grid 的 I/O 接口
-        
+        logger.info(f"Caching derived grid to {cache_filepath}")
+        new_model.grid.to_hdf5(cache_filepath)
+
         if alias:
             self._create_symlink(cache_filepath, alias_filepath, overwrite)
 
@@ -511,13 +494,10 @@ class SpecModel:
             bounding_slices.append(slice(idx_left, idx_right + 1))
             local_axes.append(axis_arr[idx_left:idx_right + 1])
         
-        # 波长维度全量保留
         bounding_slices.append(slice(None))
         
-        # 核心：使用原生 slice 从 HDF5 中读取局部小块数据到内存 (例如 2x2x2xN 数组)
         local_flux_tensor = self.grid.flux_tensor[tuple(bounding_slices)]
         
-        # 使用全内存的小块数据临时建立局部插值器，极速且安全
         local_interpolator = RegularGridInterpolator(
             tuple(local_axes), 
             local_flux_tensor, 
