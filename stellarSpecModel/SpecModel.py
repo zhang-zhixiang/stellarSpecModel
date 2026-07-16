@@ -533,3 +533,11 @@ class SpecModel:
             )
 
         return 10**interpolated_flux
+
+    @property
+    def metadata(self):
+        return self.grid.metadata
+
+    @property
+    def wave(self):
+        return self.grid.wave
